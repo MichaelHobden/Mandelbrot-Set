@@ -1,33 +1,37 @@
 import pygame
 import numpy as np
-def start_visualisation():
-    
-    # Create starting position of the visualisation
+
+def start_visualisation() -> None:
+    """
+    Initializes and runs the Mandelbrot set visualization using Pygame.
+
+    This function sets up the initial window, handles user input (zooming and panning), 
+    calculates the Mandelbrot set, and continuously updates the display with 
+    the latest visualization. It adjusts the iteration count based on the 
+    Laplacian variance and allows the user to interact with the fractal through 
+    mouse scrolling and keyboard arrow keys.
+
+    Returns:
+        None
+    """
     x_min, x_max, y_min, y_max = -2.0, 1.0, -1.5, 1.5
-    width, height = 400, 400
+    width, height = 1000, 1000
     max_iterations = 100
     
     v_min, v_max = 100, 200
-    
-    # This code is to adjust the aspect ratio
-    # It is outside of the game loop as the movement is coded in a way that it won't affect aspect ratio
     
     aspect_ratio = width / height
     x_range = x_max - x_min
     y_range = y_max - y_min
     
     if aspect_ratio > 1:
-        # Screen width greater than height
         updated_y_range = x_range / aspect_ratio
-        
         y_mid = (y_max + y_min) / 2
         y_min = y_mid - (updated_y_range / 2)
         y_max = y_mid + (updated_y_range / 2)
         
     elif aspect_ratio < 1:
-        # Screen height greater than width
         updated_x_range = y_range * aspect_ratio
-        
         x_mid = (x_max + x_min) / 2
         x_min = x_mid - (updated_x_range / 2)
         x_max = x_mid + (updated_x_range / 2)
@@ -36,11 +40,9 @@ def start_visualisation():
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption('Mandelbrot Set Visualisation')
     
-    # Configuration for FPS Text
     font = pygame.font.Font(None, 36)  
     text_color = (255, 255, 255)
      
-    # Code for game loop
     clock = pygame.time.Clock()
     dt = 0
     
@@ -51,7 +53,6 @@ def start_visualisation():
             if event.type == pygame.MOUSEWHEEL:
                 x_position, y_position = pygame.mouse.get_pos()
                 if event.y == 1:
-                    # Scroll Up: Recalculate values to zoom in 10%
                     zoom_factor = 0.95
                     
                     x_ratio = width / (x_max - x_min)
@@ -64,9 +65,6 @@ def start_visualisation():
                     y_relative_top = (y_position_relative - y_min) / (y_max - y_min)
                     y_relative_bottom = 1 - y_relative_top
                     
-                    print(x_relative_left, x_relative_right)
-                    print(y_relative_top, y_relative_bottom)
-                    
                     x_relative_left_scaled = x_relative_left * zoom_factor
                     x_relative_right_scaled = x_relative_right * zoom_factor
                     y_relative_top_scaled = y_relative_top * zoom_factor
@@ -78,8 +76,6 @@ def start_visualisation():
                     y_max = y_position_relative + (y_relative_bottom_scaled * (y_max - y_min))
                      
                 if event.y == -1:
-                    # Scroll Down
-                    # Scroll Up: Recalculate values to zoom in 10%
                     zoom_factor = 1/0.95
                     
                     x_ratio = width / (x_max - x_min)
@@ -105,29 +101,27 @@ def start_visualisation():
                 movement_factor = 0.1
                 if event.key == pygame.K_LEFT:
                     x_height_scaled = x_max - x_min
-                    up_movement =  x_height_scaled * movement_factor
+                    up_movement = x_height_scaled * movement_factor
                     x_max = x_max - up_movement
                     x_min = x_min - up_movement
                 if event.key == pygame.K_RIGHT:
                     x_height_scaled = x_max - x_min
-                    down_movement =  x_height_scaled * movement_factor
+                    down_movement = x_height_scaled * movement_factor
                     x_max = x_max + down_movement
                     x_min = x_min + down_movement
                 if event.key == pygame.K_UP:
                     y_height_scaled = y_max - y_min
-                    left_movement =  y_height_scaled * movement_factor
+                    left_movement = y_height_scaled * movement_factor
                     y_max = y_max - left_movement
                     y_min = y_min - left_movement
                 if event.key == pygame.K_DOWN:
                     y_height_scaled = y_max - y_min
-                    right_movement =  y_height_scaled * movement_factor
+                    right_movement = y_height_scaled * movement_factor
                     y_max = y_max + right_movement
                     y_min = y_min + right_movement
             elif event.type == pygame.QUIT:
                 running = False
         
-        # print(x_min, x_max, y_min, y_max)
-               
         mandelbrot_set = create_mandelbrot_set(x_min, x_max, y_min, y_max, width, height, max_iterations)
         mandelbrot_set_colored = convert_iterations_to_color(mandelbrot_set, max_iterations)
         laplacian_variance = calculate_laplacian_variance(mandelbrot_set)
@@ -152,18 +146,26 @@ def start_visualisation():
         variance = font.render(f'L-Var: {laplacian_variance}', True, text_color)
         screen.blit(variance, (10, 30))
 
-        # Update the display
         pygame.display.flip()
-        
-        
-
 
     pygame.quit()
 
-def create_mandelbrot_set(x_min: int, x_max: int, y_min: int, y_max: int, width: int, height: int, max_iterations: int) -> np.array:
-    '''Returns a mandelbrot set based off of a values that represent a box in the complex plane
-    The set is represented by colors rather than iterations,  this is to reduce overhead when it comes to processing (Not sure if it does XD)
-    '''
+def create_mandelbrot_set(x_min: float, x_max: float, y_min: float, y_max: float, width: int, height: int, max_iterations: int) -> np.ndarray:
+    """
+    Generates a Mandelbrot set based on a defined region in the complex plane.
+
+    Args:
+        x_min (float): The minimum x-value in the complex plane.
+        x_max (float): The maximum x-value in the complex plane.
+        y_min (float): The minimum y-value in the complex plane.
+        y_max (float): The maximum y-value in the complex plane.
+        width (int): The width of the output image.
+        height (int): The height of the output image.
+        max_iterations (int): The maximum number of iterations for each point.
+
+    Returns:
+        np.ndarray: A 2D array of iteration counts for each pixel.
+    """
     x = np.linspace(x_min, x_max, width)
     y = np.linspace(y_min, y_max, height)
     
@@ -179,8 +181,18 @@ def create_mandelbrot_set(x_min: int, x_max: int, y_min: int, y_max: int, width:
         iterations[mask] += 1
         
     return iterations
-   
-def convert_iterations_to_color(iterations, max_iterations):
+
+def convert_iterations_to_color(iterations: np.ndarray, max_iterations: int) -> np.ndarray:
+    """
+    Converts iteration counts from a Mandelbrot set to RGB colors.
+
+    Args:
+        iterations (np.ndarray): The array of iteration counts for each point.
+        max_iterations (int): The maximum iteration count used for color scaling.
+
+    Returns:
+        np.ndarray: A 2D array representing RGB colors for each point in the Mandelbrot set.
+    """
     t = iterations / max_iterations
     r = (9 * (1 - t) * t**3 * 255).astype(np.uint8)
     g = (15 * (1 - t)**2 * t**2 * 255).astype(np.uint8)
@@ -189,8 +201,17 @@ def convert_iterations_to_color(iterations, max_iterations):
     mandelbrot_set = np.stack((r, g, b), axis=-1)
     return mandelbrot_set
 
+def get_color(iteration: int, max_iterations: int) -> tuple[int, int, int]:
+    """
+    Returns an RGB color for a specific iteration count in the Mandelbrot set.
 
-def get_color(iteration, max_iterations):
+    Args:
+        iteration (int): The iteration count for the point in the Mandelbrot set.
+        max_iterations (int): The maximum iteration count for color scaling.
+
+    Returns:
+        tuple[int, int, int]: An RGB tuple representing the color for the given iteration.
+    """
     if iteration == max_iterations:
         return (0, 0, 0) 
     else:
@@ -199,8 +220,18 @@ def get_color(iteration, max_iterations):
         g = int(15 * (1 - t)**2 * t**2 * 255)
         b = int(8.5 * (1 - t)**3 * t * 255)
         return (r, g, b)
-    
-def calculate_laplacian_variance(array, kernel = [[0, 1, 0], [1, -4, 1], [0, 1, 0]]):
+
+def calculate_laplacian_variance(array: np.ndarray, kernel: np.ndarray = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])) -> float:
+    """
+    Calculates the variance of the Laplacian of an input array.
+
+    Args:
+        array (np.ndarray): The 2D array representing the Mandelbrot set.
+        kernel (np.ndarray, optional): The kernel for convolution, default is a Laplacian kernel.
+
+    Returns:
+        float: The variance of the Laplacian of the array.
+    """
     width, height = array.shape
     array = np.pad(array, pad_width=1, mode='constant', constant_values=1)
     
@@ -220,6 +251,5 @@ def calculate_laplacian_variance(array, kernel = [[0, 1, 0], [1, -4, 1], [0, 1, 
             
     return np.var(convolved_array)
 
-            
 if __name__ == '__main__':
     start_visualisation()
